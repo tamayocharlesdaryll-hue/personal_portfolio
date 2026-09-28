@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Projects | Charles Daryll P. Tamayo</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+</head>
+
+
+<body>
+
+<header class="site-header">
+
+<nav class="navbar container">
+
+    <a class="logo" href="index.html">
+        CD<span>.</span>
+    </a>
+
+    <button class="menu-toggle">
+        ☰
+    </button>
+
+    <div class="nav-links">
+
+        <a href="index.html">Home</a>
+
+        <a href="about.html">About</a>
+
+        <a href="skills.html">Skills</a>
+
+        <a class="active" href="projects.html">
+            Projects
+        </a>
+
+        <a href="resume.html">Resume</a>
+
+        <a href="contact.html">Contact</a>
+
+        <button class="theme-toggle">
+            ☾
+        </button>
+
+    </div>
+
+</nav>
+
+</header>
+
+
+<main>
+
+<section class="page-hero">
+
+    <div class="container">
+
+        <p class="eyebrow">
+            MY WORK
+        </p>
+
+        <h1>
+            Projects
+        </h1>
+
+        <p>
+            A selection of school and personal projects.
+        </p>
+
+    </div>
+
+</section>
+
+
+<section class="section container">
+
+
+<div class="filter-buttons">
+
+    <button class="filter-btn active"
+            data-filter="all">
+        All
+    </button>
+
+    <button class="filter-btn"
+            data-filter="web">
+        Web Development
+    </button>
+
+    <button class="filter-btn"
+            data-filter="animate">
+        Animation
+    </button>
+
+    <button class="filter-btn"
+            data-filter="network">
+        Computer Networking
+    </button>
+
+</div>
+
+
+<div class="projects-grid">
+
+
+<article class="project-card"
+         data-category="web">
+
+    <img src="images/project1.png"
+         alt="Portfolio website">
+
+    <div class="project-body">
+
+        <span class="project-tag">
+            Web Development
+        </span>
+
+        <h3>
+            Personal Portfolio
+        </h3>
+
+        <p>
+            A responsive portfolio website designed
+            to present personal information, skills,
+            and projects.
+        </p>
+
+        <div class="tech-list">
+
+            <span>HTML</span>
+            <span>CSS</span>
+
+        </div>
+
+        <button class="text-btn modal-trigger"
+                data-title="Personal Portfolio"
+                data-image="images/project1.png">
+
+            View Image
+
+        </button>
+
+    </div>
+
+</article>
+
+
+<article class="project-card"
+         data-category="animate">
+
+    <img src="images/project2.png"
+         alt="Advertisement project">
+
+    <div class="project-body">
+
+        <span class="project-tag">
+            Animation
+        </span>
+
+        <h3>
+            Product Advertisement
+        </h3>
+
+        <p>
+            A creative animation project focused on 
+            promoting a product through animated 
+            visuals, text, transitions, and visual effects.
+        </p>
+
+        <div class="tech-list">
+
+            <span>Adobe Animate</span>
+            <span>Animation</span>
+            <span>Design</span>
+
+        </div>
+
+        <button class="text-btn modal-trigger"
+                data-title="Product Advertisement"
+                data-image="images/project2.png">
+
+            View Image
+
+        </button>
+
+    </div>
+
+</article>
+
+
+<article class="project-card"
+         data-category="animate">
+
+    <img src="images/project3.png"
+         alt="Animated advertisement">
+
+    <div class="project-body">
+
+        <span class="project-tag">
+            Animation
+        </span>
+
+        <h3>
+            Motion Path
+        </h3>
+
+        <p>
+            A school animation project created to practice 
+            motion paths by making objects move along 
+            different paths and directions.
+        </p>
+
+        <div class="tech-list">
+
+            <span>Adobe Animate</span>
+            <span>Animation</span>
+            <span>Design</span>
+
+        </div>
+
+        <button class="text-btn modal-trigger"
+                data-title="Motion Path"
+                data-image="images/project3.png">
+
+            View Image
+
+        </button>
+
+    </div>
+
+</article>
+
+
+<article class="project-card"
+         data-category="network">
+
+    <img src="images/project4.png"
+         alt="Network Topology">
+
+    <div class="project-body">
+
+        <span class="project-tag">
+            Computer Networking
+        </span>
+
+        <h3>
+            Hybrid network Configuration
+        </h3>
+
+        <p>
+            A school networking project focused on configuring 
+            a hybrid network using routers, switches, and 
+            different types of network connections.
+        </p>
+
+        <div class="tech-list">
+
+            <span>Networking</span>
+            <span>Topology</span>
+            <span>Hybrid Network</span>
+
+        </div>
+
+        <button class="text-btn modal-trigger"
+                data-title="Hybrid Topology"
+                data-image="images/project4.png">
+
+            View Image
+
+        </button>
+
+    </div>
+
+</article>
+
+
+</div>
+
+</section>
+
+</main>
+
+
+<div class="modal"
+     id="image-modal">
+
+    <div class="modal-content">
+
+        <button class="modal-close">
+            ×
+        </button>
+
+        <img id="modal-image"
+             src=""
+             alt="Project preview">
+
+        <h3 id="modal-title"></h3>
+
+    </div>
+
+</div>
+
+
+<footer class="footer">
+
+    <div class="container">
+
+        <p>
+            © 2026 Charles Daryll P. Tamayo. All rights reserved.
+        </p>
+
+    </div>
+
+</footer>
+
+
+<button class="scroll-top">
+    ↑
+</button>
+
+
+<script src="js/script.js"></script>
+
+</body>
+</html>
