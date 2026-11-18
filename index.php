@@ -42,8 +42,8 @@ $primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Personal portfolio website">
     <title><?php echo publicEscape($settings['website_title']); ?></title>
-    <style>:root { --primary: <?php echo publicEscape($primaryColor); ?>; }</style>
     <link rel="stylesheet" href="css/style.css">
+    <style>:root { --primary: <?php echo publicEscape($primaryColor); ?>; --primary-dark: color-mix(in srgb, <?php echo publicEscape($primaryColor); ?> 78%, #000); }</style>
 </head>
 <body>
 
