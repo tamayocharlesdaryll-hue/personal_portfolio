@@ -6,11 +6,13 @@ require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $message = '';
+$messageType = 'success';
 $editing = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $message = 'Invalid form request. Please try again.';
+        $messageType = 'error';
     } else {
         $action = $_POST['action'] ?? '';
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -20,8 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $statement = $pdo->prepare('DELETE FROM experiences WHERE id = ?');
                 $statement->execute([$id]);
                 $message = $statement->rowCount() > 0 ? 'Experience entry deleted.' : 'Experience entry was not found.';
+                $messageType = $statement->rowCount() > 0 ? 'success' : 'error';
             } else {
                 $message = 'Choose a valid experience entry to delete.';
+                $messageType = 'error';
             }
         } elseif ($action === 'save') {
             $title = trim($_POST['title'] ?? '');
@@ -29,9 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $startYear = trim($_POST['start_year'] ?? '');
             $endYear = trim($_POST['end_year'] ?? '');
             $description = trim($_POST['description'] ?? '');
+            $isEditing = !empty($_POST['id']);
 
-            if (($id === false && !empty($_POST['id'])) || $title === '' || $organization === '' || $startYear === '' || mb_strlen($title) > 200 || mb_strlen($organization) > 200 || mb_strlen($startYear) > 20 || mb_strlen($endYear) > 20) {
-                $message = 'Enter a valid title, organization, and start year (maximum 20 characters).';
+            if (($isEditing && !$id) || $title === '' || $organization === '' || $startYear === '' || mb_strlen($title) > 200 || mb_strlen($organization) > 200 || mb_strlen($startYear) > 20 || mb_strlen($endYear) > 20) {
+                $message = 'Enter a valid title, organization, and start year. Titles and organizations must be at most 200 characters; years at most 20.';
+                $messageType = 'error';
                 $editing = [
                     'id' => $id,
                     'title' => $title,
@@ -40,10 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'end_year' => $endYear,
                     'description' => $description
                 ];
-            } elseif (!empty($id)) {
+            } elseif ($isEditing) {
                 $statement = $pdo->prepare('UPDATE experiences SET title = ?, organization = ?, start_year = ?, end_year = ?, description = ? WHERE id = ?');
                 $statement->execute([$title, $organization, $startYear, $endYear, $description, $id]);
-                $message = $statement->rowCount() > 0 ? 'Experience entry updated.' : 'Experience entry was not found or no values changed.';
+                $exists = $pdo->prepare('SELECT id FROM experiences WHERE id = ?');
+                $exists->execute([$id]);
+                if ($exists->fetch()) {
+                    $message = 'Experience entry updated.';
+                } else {
+                    $message = 'Experience entry was not found.';
+                    $messageType = 'error';
+                }
             } else {
                 $statement = $pdo->prepare('INSERT INTO experiences (title, organization, start_year, end_year, description) VALUES (?, ?, ?, ?, ?)');
                 $statement->execute([$title, $organization, $startYear, $endYear, $description]);
@@ -59,6 +72,10 @@ if ($editing === null && isset($_GET['edit'])) {
         $statement = $pdo->prepare('SELECT * FROM experiences WHERE id = ?');
         $statement->execute([$editId]);
         $editing = $statement->fetch() ?: null;
+        if (!$editing) {
+            $message = 'Experience entry was not found.';
+            $messageType = 'error';
+        }
     }
 }
 
@@ -92,7 +109,9 @@ $experiences = $pdo->query('SELECT * FROM experiences ORDER BY start_year DESC, 
     </nav>
     <main class="admin-main">
         <h2><?php echo $editing ? 'Edit Experience' : 'Add Experience'; ?></h2>
-        <?php if ($message !== ''): ?><p class="success-message"><?php echo escape($message); ?></p><?php endif; ?>
+        <?php if ($message !== ''): ?>
+            <p class="<?php echo $messageType === 'error' ? 'error-message' : 'success-message'; ?>" role="status"><?php echo escape($message); ?></p>
+        <?php endif; ?>
         <form class="admin-form" method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escape(csrf_token()); ?>">
             <input type="hidden" name="action" value="save">

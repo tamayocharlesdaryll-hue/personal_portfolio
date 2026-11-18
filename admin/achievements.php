@@ -6,11 +6,13 @@ require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $message = '';
+$messageType = 'success';
 $editing = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $message = 'Invalid form request. Please try again.';
+        $messageType = 'error';
     } else {
         $action = $_POST['action'] ?? '';
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -20,17 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $statement = $pdo->prepare('DELETE FROM achievements WHERE id = ?');
                 $statement->execute([$id]);
                 $message = $statement->rowCount() > 0 ? 'Achievement deleted.' : 'Achievement was not found.';
+                $messageType = $statement->rowCount() > 0 ? 'success' : 'error';
             } else {
                 $message = 'Choose a valid achievement to delete.';
+                $messageType = 'error';
             }
         } elseif ($action === 'save') {
             $title = trim($_POST['title'] ?? '');
             $issuer = trim($_POST['issuer'] ?? '');
             $achievementDate = trim($_POST['achievement_date'] ?? '');
             $description = trim($_POST['description'] ?? '');
+            $isEditing = !empty($_POST['id']);
 
-            if (($id === false && !empty($_POST['id'])) || $title === '' || mb_strlen($title) > 200 || mb_strlen($issuer) > 200 || mb_strlen($achievementDate) > 50) {
-                $message = 'Enter a valid achievement title. Issuer is limited to 200 characters and date to 50 characters.';
+            if (($isEditing && !$id) || $title === '' || mb_strlen($title) > 200 || mb_strlen($issuer) > 200 || mb_strlen($achievementDate) > 50) {
+                $message = 'Enter an achievement title (maximum 200 characters). Issuer is limited to 200 characters and date to 50 characters.';
+                $messageType = 'error';
                 $editing = [
                     'id' => $id,
                     'title' => $title,
@@ -38,10 +44,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'achievement_date' => $achievementDate,
                     'description' => $description
                 ];
-            } elseif (!empty($id)) {
+            } elseif ($isEditing) {
                 $statement = $pdo->prepare('UPDATE achievements SET title = ?, issuer = ?, achievement_date = ?, description = ? WHERE id = ?');
                 $statement->execute([$title, $issuer, $achievementDate, $description, $id]);
-                $message = $statement->rowCount() > 0 ? 'Achievement updated.' : 'Achievement was not found or no values changed.';
+                $exists = $pdo->prepare('SELECT id FROM achievements WHERE id = ?');
+                $exists->execute([$id]);
+                if ($exists->fetch()) {
+                    $message = 'Achievement updated.';
+                } else {
+                    $message = 'Achievement was not found.';
+                    $messageType = 'error';
+                }
             } else {
                 $statement = $pdo->prepare('INSERT INTO achievements (title, issuer, achievement_date, description) VALUES (?, ?, ?, ?)');
                 $statement->execute([$title, $issuer, $achievementDate, $description]);
@@ -57,6 +70,10 @@ if ($editing === null && isset($_GET['edit'])) {
         $statement = $pdo->prepare('SELECT * FROM achievements WHERE id = ?');
         $statement->execute([$editId]);
         $editing = $statement->fetch() ?: null;
+        if (!$editing) {
+            $message = 'Achievement was not found.';
+            $messageType = 'error';
+        }
     }
 }
 
@@ -90,7 +107,9 @@ $achievements = $pdo->query('SELECT * FROM achievements ORDER BY id DESC')->fetc
     </nav>
     <main class="admin-main">
         <h2><?php echo $editing ? 'Edit Achievement' : 'Add Achievement'; ?></h2>
-        <?php if ($message !== ''): ?><p class="success-message"><?php echo escape($message); ?></p><?php endif; ?>
+        <?php if ($message !== ''): ?>
+            <p class="<?php echo $messageType === 'error' ? 'error-message' : 'success-message'; ?>" role="status"><?php echo escape($message); ?></p>
+        <?php endif; ?>
         <form class="admin-form" method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escape(csrf_token()); ?>">
             <input type="hidden" name="action" value="save">
