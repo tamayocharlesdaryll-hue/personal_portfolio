@@ -6,11 +6,13 @@ require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $message = '';
+$messageType = 'success';
 $editing = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $message = 'Invalid form request. Please try again.';
+        $messageType = 'error';
     } else {
         $action = $_POST['action'] ?? '';
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -20,8 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $statement = $pdo->prepare('DELETE FROM education WHERE id = ?');
                 $statement->execute([$id]);
                 $message = $statement->rowCount() > 0 ? 'Education entry deleted.' : 'Education entry was not found.';
+                $messageType = $statement->rowCount() > 0 ? 'success' : 'error';
             } else {
                 $message = 'Choose a valid education entry to delete.';
+                $messageType = 'error';
             }
         } elseif ($action === 'save') {
             $institution = trim($_POST['institution'] ?? '');
@@ -29,14 +33,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $startYear = trim($_POST['start_year'] ?? '');
             $endYear = trim($_POST['end_year'] ?? '');
             $description = trim($_POST['description'] ?? '');
+            $isEditing = !empty($_POST['id']);
 
-            if (($id === false && !empty($_POST['id'])) || $institution === '' || $degree === '' || $startYear === '' || mb_strlen($institution) > 200 || mb_strlen($degree) > 200 || mb_strlen($startYear) > 20 || mb_strlen($endYear) > 20) {
+            if (($isEditing && !$id) || $institution === '' || $degree === '' || $startYear === '' || mb_strlen($institution) > 200 || mb_strlen($degree) > 200 || mb_strlen($startYear) > 20 || mb_strlen($endYear) > 20) {
                 $message = 'Enter a valid institution, degree, and start year (maximum 20 characters).';
-                $editing = compact('id', 'institution', 'degree', 'startYear', 'endYear', 'description');
-            } elseif (!empty($id)) {
+                $messageType = 'error';
+                $editing = [
+                    'id' => $id,
+                    'institution' => $institution,
+                    'degree' => $degree,
+                    'start_year' => $startYear,
+                    'end_year' => $endYear,
+                    'description' => $description
+                ];
+            } elseif ($isEditing) {
                 $statement = $pdo->prepare('UPDATE education SET institution = ?, degree = ?, start_year = ?, end_year = ?, description = ? WHERE id = ?');
                 $statement->execute([$institution, $degree, $startYear, $endYear, $description, $id]);
-                $message = $statement->rowCount() > 0 ? 'Education entry updated.' : 'Education entry was not found or no values changed.';
+                $exists = $pdo->prepare('SELECT id FROM education WHERE id = ?');
+                $exists->execute([$id]);
+                if ($exists->fetch()) {
+                    $message = 'Education entry updated.';
+                } else {
+                    $message = 'Education entry was not found.';
+                    $messageType = 'error';
+                }
             } else {
                 $statement = $pdo->prepare('INSERT INTO education (institution, degree, start_year, end_year, description) VALUES (?, ?, ?, ?, ?)');
                 $statement->execute([$institution, $degree, $startYear, $endYear, $description]);
@@ -52,6 +72,10 @@ if ($editing === null && isset($_GET['edit'])) {
         $statement = $pdo->prepare('SELECT * FROM education WHERE id = ?');
         $statement->execute([$editId]);
         $editing = $statement->fetch() ?: null;
+        if (!$editing) {
+            $message = 'Education entry was not found.';
+            $messageType = 'error';
+        }
     }
 }
 
@@ -85,19 +109,21 @@ $education = $pdo->query('SELECT * FROM education ORDER BY start_year DESC, id D
     </nav>
     <main class="admin-main">
         <h2><?php echo $editing ? 'Edit Education' : 'Add Education'; ?></h2>
-        <?php if ($message !== ''): ?><p class="success-message"><?php echo escape($message); ?></p><?php endif; ?>
+        <?php if ($message !== ''): ?>
+            <p class="<?php echo $messageType === 'error' ? 'error-message' : 'success-message'; ?>" role="status"><?php echo escape($message); ?></p>
+        <?php endif; ?>
         <form class="admin-form" method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escape(csrf_token()); ?>">
             <input type="hidden" name="action" value="save">
-            <input type="hidden" name="id" value="<?php echo escape($editing['id'] ?? $editing['id'] ?? ''); ?>">
+            <input type="hidden" name="id" value="<?php echo escape($editing['id'] ?? ''); ?>">
             <label for="institution">Institution</label>
-            <input id="institution" name="institution" maxlength="200" value="<?php echo escape($editing['institution'] ?? $editing['institution'] ?? ''); ?>" required>
+            <input id="institution" name="institution" maxlength="200" value="<?php echo escape($editing['institution'] ?? ''); ?>" required>
             <label for="degree">Degree or program</label>
-            <input id="degree" name="degree" maxlength="200" value="<?php echo escape($editing['degree'] ?? $editing['degree'] ?? ''); ?>" required>
+            <input id="degree" name="degree" maxlength="200" value="<?php echo escape($editing['degree'] ?? ''); ?>" required>
             <label for="start_year">Start year</label>
-            <input id="start_year" name="start_year" maxlength="20" value="<?php echo escape($editing['start_year'] ?? $editing['startYear'] ?? ''); ?>" required>
+            <input id="start_year" name="start_year" maxlength="20" value="<?php echo escape($editing['start_year'] ?? ''); ?>" required>
             <label for="end_year">End year (leave blank if current)</label>
-            <input id="end_year" name="end_year" maxlength="20" value="<?php echo escape($editing['end_year'] ?? $editing['endYear'] ?? ''); ?>">
+            <input id="end_year" name="end_year" maxlength="20" value="<?php echo escape($editing['end_year'] ?? ''); ?>">
             <label for="description">Description</label>
             <textarea id="description" name="description" rows="4"><?php echo escape($editing['description'] ?? ''); ?></textarea>
             <button class="btn" type="submit"><?php echo $editing ? 'Update Education' : 'Add Education'; ?></button>
