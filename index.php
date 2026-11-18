@@ -30,6 +30,10 @@ if (!$settings) {
 function publicEscape($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+
+$primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
+    ? $settings['primary_color']
+    : '#5b5ce2';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,10 +42,9 @@ function publicEscape($value) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Personal portfolio website">
     <title><?php echo publicEscape($settings['website_title']); ?></title>
-
+    <style>:root { --primary: <?php echo publicEscape($primaryColor); ?>; }</style>
     <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
 
 <header class="site-header">
@@ -50,9 +53,7 @@ function publicEscape($value) {
             <?php echo publicEscape($settings['logo_text']); ?><span>.</span>
         </a>
 
-        <button class="menu-toggle" aria-label="Open navigation">
-            ☰
-        </button>
+        <button class="menu-toggle" aria-label="Open navigation">☰</button>
 
         <div class="nav-links">
             <a class="active" href="index.php">Home</a>
@@ -61,10 +62,7 @@ function publicEscape($value) {
             <a href="projects.php">Projects</a>
             <a href="resume.php">Resume</a>
             <a href="contact.php">Contact</a>
-
-            <button class="theme-toggle" aria-label="Toggle dark mode">
-                ☾
-            </button>
+            <button class="theme-toggle" aria-label="Toggle dark mode">☾</button>
         </div>
     </nav>
 </header>
@@ -73,20 +71,14 @@ function publicEscape($value) {
     <section class="hero container">
         <div class="hero-content">
             <p class="eyebrow">WELCOME TO MY PORTFOLIO</p>
-
             <h1>Hi, I'm <span><?php echo publicEscape($profile['full_name']); ?></span>.</h1>
             <h2>I am a <span><?php echo publicEscape($profile['title']); ?></span></h2>
-
-            <p class="hero-text">
-                <?php echo publicEscape($profile['introduction']); ?>
-            </p>
-
+            <p class="hero-text"><?php echo publicEscape($profile['introduction']); ?></p>
             <div class="hero-buttons">
                 <a class="btn" href="projects.php">View My Projects</a>
                 <a class="btn btn-outline" href="contact.php">Contact Me</a>
             </div>
         </div>
-
         <div class="hero-image">
             <img src="<?php echo publicEscape($profile['profile_image'] ?: 'images/profile.png'); ?>" alt="Profile photo">
         </div>
@@ -96,18 +88,13 @@ function publicEscape($value) {
         <div class="container center">
             <p class="eyebrow">WHAT I DO</p>
             <h2 class="section-title">Learning new things</h2>
-
-            <p class="section-intro">
-                <?php echo publicEscape($profile['biography']); ?>
-            </p>
-
+            <p class="section-intro"><?php echo publicEscape($profile['biography']); ?></p>
             <div class="projects-grid">
                 <?php foreach (array_slice($projects, 0, 3) as $project): ?>
                     <article class="project-card">
                         <?php if (!empty($project['image'])): ?>
                             <img src="<?php echo publicEscape($project['image']); ?>" alt="<?php echo publicEscape($project['title']); ?>">
                         <?php endif; ?>
-
                         <div class="project-body">
                             <span class="project-tag"><?php echo publicEscape($project['category']); ?></span>
                             <h3><?php echo publicEscape($project['title']); ?></h3>
@@ -127,7 +114,6 @@ function publicEscape($value) {
 </footer>
 
 <button class="scroll-top" aria-label="Scroll to top">↑</button>
-
 <script src="js/script.js"></script>
 
 </body>
