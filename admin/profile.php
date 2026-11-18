@@ -6,45 +6,9 @@ require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $message = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
-        $message = 'Invalid form request. Please try again.';
-    } else {
-        $fullName = trim($_POST['full_name'] ?? '');
-        $title = trim($_POST['title'] ?? '');
-        $introduction = trim($_POST['introduction'] ?? '');
-        $biography = trim($_POST['biography'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $facebook = trim($_POST['facebook'] ?? '');
-        $instagram = trim($_POST['instagram'] ?? '');
-
-        if ($fullName === '' || $title === '' || $introduction === '' || $biography === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $message = 'Please complete all required fields with a valid email address.';
-        } else {
-            $statement = $pdo->prepare(
-                'UPDATE personal_info SET full_name = ?, title = ?, introduction = ?, biography = ?, email = ?, facebook = ?, instagram = ? WHERE id = 1'
-            );
-            $statement->execute([$fullName, $title, $introduction, $biography, $email, $facebook, $instagram]);
-
-            if ($statement->rowCount() === 0) {
-                $check = $pdo->query('SELECT id FROM personal_info WHERE id = 1')->fetch();
-
-                if (!$check) {
-                    $insert = $pdo->prepare(
-                        'INSERT INTO personal_info (id, full_name, title, introduction, biography, email, facebook, instagram) VALUES (1, ?, ?, ?, ?, ?, ?, ?)'
-                    );
-                    $insert->execute([$fullName, $title, $introduction, $biography, $email, $facebook, $instagram]);
-                }
-            }
-
-            $message = 'Profile information saved.';
-        }
-    }
-}
+$messageType = 'success';
 
 $profile = $pdo->query('SELECT * FROM personal_info WHERE id = 1')->fetch();
-
 if (!$profile) {
     $profile = [
         'full_name' => '',
@@ -53,8 +17,61 @@ if (!$profile) {
         'biography' => '',
         'email' => '',
         'facebook' => '',
-        'instagram' => ''
+        'instagram' => '',
+        'profile_image' => 'images/profile.png'
     ];
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $profile = array_merge($profile, [
+        'full_name' => trim($_POST['full_name'] ?? ''),
+        'title' => trim($_POST['title'] ?? ''),
+        'introduction' => trim($_POST['introduction'] ?? ''),
+        'biography' => trim($_POST['biography'] ?? ''),
+        'email' => trim($_POST['email'] ?? ''),
+        'facebook' => trim($_POST['facebook'] ?? ''),
+        'instagram' => trim($_POST['instagram'] ?? '')
+    ]);
+
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $message = 'Invalid form request. Please try again.';
+        $messageType = 'error';
+    } else {
+        $valid = $profile['full_name'] !== ''
+            && mb_strlen($profile['full_name']) <= 150
+            && $profile['title'] !== ''
+            && mb_strlen($profile['title']) <= 150
+            && $profile['introduction'] !== ''
+            && $profile['biography'] !== ''
+            && filter_var($profile['email'], FILTER_VALIDATE_EMAIL)
+            && mb_strlen($profile['email']) <= 150;
+
+        foreach (['facebook', 'instagram'] as $socialField) {
+            if ($profile[$socialField] !== '' && (!filter_var($profile[$socialField], FILTER_VALIDATE_URL) || mb_strlen($profile[$socialField]) > 255)) {
+                $valid = false;
+            }
+        }
+
+        if (!$valid) {
+            $message = 'Complete the required fields. Name and title must be at most 150 characters, email must be valid, and social links must be valid URLs up to 255 characters.';
+            $messageType = 'error';
+        } else {
+            $statement = $pdo->prepare(
+                'INSERT INTO personal_info (id, full_name, title, introduction, biography, email, facebook, instagram, profile_image) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE full_name = VALUES(full_name), title = VALUES(title), introduction = VALUES(introduction), biography = VALUES(biography), email = VALUES(email), facebook = VALUES(facebook), instagram = VALUES(instagram)'
+            );
+            $statement->execute([
+                $profile['full_name'],
+                $profile['title'],
+                $profile['introduction'],
+                $profile['biography'],
+                $profile['email'],
+                $profile['facebook'],
+                $profile['instagram'],
+                $profile['profile_image'] ?: 'images/profile.png'
+            ]);
+            $message = 'Profile information saved.';
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -67,12 +84,10 @@ if (!$profile) {
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-
 <header class="admin-header">
     <h1>Portfolio Admin</h1>
     <a class="btn" href="logout.php">Logout</a>
 </header>
-
 <div class="admin-layout">
     <nav class="admin-nav">
         <a href="dashboard.php">Dashboard</a>
@@ -85,12 +100,10 @@ if (!$profile) {
         <a href="messages.php">Messages</a>
         <a href="settings.php">Settings</a>
     </nav>
-
     <main class="admin-main">
         <h2>Personal Information</h2>
-
         <?php if ($message !== ''): ?>
-            <p class="success-message"><?php echo escape($message); ?></p>
+            <p class="<?php echo $messageType === 'error' ? 'error-message' : 'success-message'; ?>" role="status"><?php echo escape($message); ?></p>
         <?php endif; ?>
 
         <form class="admin-form" method="post">
@@ -121,6 +134,5 @@ if (!$profile) {
         </form>
     </main>
 </div>
-
 </body>
 </html>
