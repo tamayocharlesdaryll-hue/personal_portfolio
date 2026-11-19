@@ -6,7 +6,9 @@ require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
 $message = '';
+$messageType = 'success';
 $settings = $pdo->query('SELECT * FROM website_settings WHERE id = 1')->fetch();
+
 if (!$settings) {
     $settings = [
         'website_title' => 'Charles Daryll P. Tamayo | Portfolio',
@@ -18,29 +20,26 @@ if (!$settings) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $message = 'Invalid form request. Please try again.';
+        $messageType = 'error';
     } else {
         $websiteTitle = trim($_POST['website_title'] ?? '');
         $logoText = trim($_POST['logo_text'] ?? '');
-        $primaryColor = trim($_POST['primary_color'] ?? '');
+        $primaryColor = strtolower(trim($_POST['primary_color'] ?? ''));
 
-        if ($websiteTitle === '' || mb_strlen($websiteTitle) > 200 || $logoText === '' || mb_strlen($logoText) > 50 || !preg_match('/^#[0-9a-fA-F]{6}$/', $primaryColor)) {
+        if ($websiteTitle === '' || mb_strlen($websiteTitle) > 200 || $logoText === '' || mb_strlen($logoText) > 50 || !preg_match('/^#[0-9a-f]{6}$/', $primaryColor)) {
             $message = 'Enter a website title (up to 200 characters), logo text (up to 50 characters), and a valid six-digit hex color.';
+            $messageType = 'error';
             $settings = [
                 'website_title' => $websiteTitle,
                 'logo_text' => $logoText,
                 'primary_color' => $primaryColor
             ];
         } else {
-            $statement = $pdo->prepare('UPDATE website_settings SET website_title = ?, logo_text = ?, primary_color = ? WHERE id = 1');
+            $statement = $pdo->prepare(
+                'INSERT INTO website_settings (id, website_title, logo_text, primary_color) VALUES (1, ?, ?, ?) '
+                . 'ON DUPLICATE KEY UPDATE website_title = VALUES(website_title), logo_text = VALUES(logo_text), primary_color = VALUES(primary_color)'
+            );
             $statement->execute([$websiteTitle, $logoText, $primaryColor]);
-
-            if ($statement->rowCount() === 0) {
-                $check = $pdo->query('SELECT id FROM website_settings WHERE id = 1')->fetch();
-                if (!$check) {
-                    $insert = $pdo->prepare('INSERT INTO website_settings (id, website_title, logo_text, primary_color) VALUES (1, ?, ?, ?)');
-                    $insert->execute([$websiteTitle, $logoText, $primaryColor]);
-                }
-            }
 
             $settings = [
                 'website_title' => $websiteTitle,
@@ -81,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="admin-main">
         <h2>Website Settings</h2>
         <?php if ($message !== ''): ?>
-            <p class="success-message" role="status"><?php echo escape($message); ?></p>
+            <p class="<?php echo $messageType === 'error' ? 'error-message' : 'success-message'; ?>" role="status"><?php echo escape($message); ?></p>
         <?php endif; ?>
         <form class="admin-form" method="post">
             <input type="hidden" name="csrf_token" value="<?php echo escape(csrf_token()); ?>">
@@ -93,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input id="logo_text" name="logo_text" maxlength="50" value="<?php echo escape($settings['logo_text']); ?>" required>
 
             <label for="primary_color">Primary color</label>
-            <input id="primary_color" name="primary_color" type="color" value="<?php echo escape(preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color']) ? $settings['primary_color'] : '#5b5ce2'); ?>" required>
+            <input id="primary_color" name="primary_color" type="color" value="<?php echo escape(preg_match('/^#[0-9a-f]{6}$/', $settings['primary_color']) ? $settings['primary_color'] : '#5b5ce2'); ?>" required>
 
             <button class="btn" type="submit">Save Settings</button>
         </form>

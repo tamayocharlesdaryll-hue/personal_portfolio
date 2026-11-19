@@ -12,9 +12,6 @@ if (!$profile) {
         'title' => 'Student',
         'introduction' => 'I am still improving my skills and discovering what I enjoy the most.',
         'biography' => 'This portfolio highlights my education, creative work, and experience.',
-        'email' => 'tamayocharlesdaryll@gmail.com',
-        'facebook' => 'https://www.facebook.com/charles.tamayo.522',
-        'instagram' => 'https://www.instagram.com/charles.jpeg',
         'profile_image' => 'images/profile.png'
     ];
 }
@@ -34,6 +31,7 @@ function publicEscape($value) {
 $primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
     ? $settings['primary_color']
     : '#5b5ce2';
+$profileImage = !empty($profile['profile_image']) ? $profile['profile_image'] : 'images/profile.png';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -53,16 +51,16 @@ $primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
             <?php echo publicEscape($settings['logo_text']); ?><span>.</span>
         </a>
 
-        <button class="menu-toggle" aria-label="Open navigation">☰</button>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
 
         <div class="nav-links">
-            <a class="active" href="index.php">Home</a>
+            <a class="active" href="index.php" aria-current="page">Home</a>
             <a href="about.php">About</a>
             <a href="skills.php">Skills</a>
             <a href="projects.php">Projects</a>
             <a href="resume.php">Resume</a>
             <a href="contact.php">Contact</a>
-            <button class="theme-toggle" aria-label="Toggle dark mode">☾</button>
+            <button class="theme-toggle" type="button" aria-label="Toggle dark mode">☾</button>
         </div>
     </nav>
 </header>
@@ -80,7 +78,7 @@ $primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
             </div>
         </div>
         <div class="hero-image">
-            <img src="<?php echo publicEscape($profile['profile_image'] ?: 'images/profile.png'); ?>" alt="Profile photo">
+            <img src="<?php echo publicEscape($profileImage); ?>" alt="Profile photo of <?php echo publicEscape($profile['full_name']); ?>">
         </div>
     </section>
 
@@ -113,7 +111,7 @@ $primaryColor = preg_match('/^#[0-9a-fA-F]{6}$/', $settings['primary_color'])
     </div>
 </footer>
 
-<button class="scroll-top" aria-label="Scroll to top">↑</button>
+<button class="scroll-top" type="button" aria-label="Scroll to top">↑</button>
 <script src="js/script.js"></script>
 
 </body>

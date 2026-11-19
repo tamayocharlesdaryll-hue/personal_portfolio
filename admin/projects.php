@@ -50,11 +50,16 @@ function save_project_image($file) {
 }
 
 function remove_project_image($imagePath) {
-    if (strpos($imagePath, 'uploads/') !== 0 || basename($imagePath) !== substr($imagePath, 8)) {
+    if (!is_string($imagePath) || strpos($imagePath, 'uploads/') !== 0) {
         return;
     }
 
-    $fullPath = __DIR__ . '/../' . $imagePath;
+    $fileName = substr($imagePath, strlen('uploads/'));
+    if ($fileName === '' || basename($fileName) !== $fileName) {
+        return;
+    }
+
+    $fullPath = __DIR__ . '/../uploads/' . $fileName;
     if (is_file($fullPath)) {
         unlink($fullPath);
     }
@@ -93,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $statement = $pdo->prepare('SELECT image FROM projects WHERE id = ?');
                 $statement->execute([$projectId]);
                 $project = $statement->fetch();
+
                 if ($project) {
                     $delete = $pdo->prepare('DELETE FROM projects WHERE id = ?');
                     $delete->execute([$projectId]);
@@ -131,6 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'project_url' => $projectUrl,
                     'image' => ''
                 ];
+
                 if ($projectId) {
                     $current = $pdo->prepare('SELECT image FROM projects WHERE id = ?');
                     $current->execute([$projectId]);
@@ -138,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } else {
                 $newImage = save_project_image($_FILES['image'] ?? null);
+
                 if ($newImage === false) {
                     $message = 'Upload a valid image under 2 MB. JPG, PNG, GIF, and WebP are accepted.';
                     $messageType = 'error';
@@ -150,6 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'project_url' => $projectUrl,
                         'image' => ''
                     ];
+
                     if ($projectId) {
                         $current = $pdo->prepare('SELECT image FROM projects WHERE id = ?');
                         $current->execute([$projectId]);
@@ -170,9 +179,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $imagePath = $newImage ?? $existingProject['image'];
                         $update = $pdo->prepare('UPDATE projects SET title = ?, category = ?, description = ?, technology = ?, image = ?, project_url = ? WHERE id = ?');
                         $update->execute([$title, $category, $description, $technology, $imagePath, $projectUrl ?: null, $projectId]);
+
                         if ($newImage !== null) {
                             remove_project_image($existingProject['image'] ?? '');
                         }
+
                         $message = 'Project updated.';
                         $editingProject = null;
                     }
