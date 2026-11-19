@@ -5,9 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (menuToggle && navLinks) {
         menuToggle.addEventListener("click", function () {
-            navLinks.classList.toggle("open");
-            const isOpen = navLinks.classList.contains("open");
-
+            const isOpen = navLinks.classList.toggle("open");
             menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
             menuToggle.textContent = isOpen ? "✕" : "☰";
         });
@@ -22,18 +20,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const themeToggle = document.querySelector(".theme-toggle");
-    const savedTheme = localStorage.getItem("portfolio-theme");
 
-    if (savedTheme === "dark") {
+    if (localStorage.getItem("portfolio-theme") === "dark") {
         document.body.classList.add("dark");
     }
 
     function updateThemeIcon() {
-        if (!themeToggle) {
-            return;
+        if (themeToggle) {
+            themeToggle.textContent = document.body.classList.contains("dark") ? "☀" : "☾";
         }
-
-        themeToggle.textContent = document.body.classList.contains("dark") ? "☀" : "☾";
     }
 
     updateThemeIcon();
@@ -90,13 +85,15 @@ document.addEventListener("DOMContentLoaded", function () {
         button.addEventListener("click", function () {
             filterButtons.forEach(function (btn) {
                 btn.classList.remove("active");
+                btn.setAttribute("aria-pressed", "false");
             });
 
             button.classList.add("active");
+            button.setAttribute("aria-pressed", "true");
             const filter = button.dataset.filter;
 
             projectCards.forEach(function (card) {
-                card.style.display = filter === "all" || card.dataset.category === filter ? "block" : "none";
+                card.hidden = !(filter === "all" || card.dataset.category === filter);
             });
         });
     });
@@ -108,18 +105,29 @@ document.addEventListener("DOMContentLoaded", function () {
     const modalButtons = document.querySelectorAll(".modal-trigger");
 
     if (modal && modalImage && modalTitle) {
+        let previousFocus = null;
+
+        function closeModal() {
+            modal.classList.remove("show");
+            modal.setAttribute("aria-hidden", "true");
+            if (previousFocus) {
+                previousFocus.focus();
+            }
+        }
+
         modalButtons.forEach(function (button) {
             button.addEventListener("click", function () {
+                previousFocus = button;
                 modalImage.src = button.dataset.image || "";
                 modalImage.alt = button.dataset.title || "Project preview";
                 modalTitle.textContent = button.dataset.title || "";
                 modal.classList.add("show");
+                modal.setAttribute("aria-hidden", "false");
+                if (modalClose) {
+                    modalClose.focus();
+                }
             });
         });
-
-        function closeModal() {
-            modal.classList.remove("show");
-        }
 
         if (modalClose) {
             modalClose.addEventListener("click", closeModal);
@@ -150,26 +158,31 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    const form = document.querySelector("#contact-form");
+    const form = document.querySelector("#contact-form") || document.querySelector("#contact-form-server");
 
     if (form) {
         form.addEventListener("submit", function (event) {
-            event.preventDefault();
-
             const name = form.querySelector("#name");
             const email = form.querySelector("#email");
             const subject = form.querySelector("#subject");
             const message = form.querySelector("#message");
-            const success = form.querySelector("#form-success");
 
             if (!name || !email || !subject || !message) {
                 return;
             }
 
+            // PHP pages submit server-side; this block only handles the legacy HTML form.
+            if (form.id === "contact-form-server") {
+                return;
+            }
+
+            event.preventDefault();
+
             form.querySelectorAll(".error").forEach(function (error) {
                 error.textContent = "";
             });
 
+            const success = form.querySelector("#form-success");
             if (success) {
                 success.textContent = "";
             }

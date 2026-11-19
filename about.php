@@ -15,6 +15,8 @@ if (!$profile) {
 function escapeAbout($value) {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
+
+$aboutImage = !empty($profile['profile_image']) ? $profile['profile_image'] : 'images/about.png';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,15 +32,15 @@ function escapeAbout($value) {
 <header class="site-header">
     <nav class="navbar container">
         <a class="logo" href="index.php">CD<span>.</span></a>
-        <button class="menu-toggle" aria-label="Open navigation">☰</button>
+        <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
         <div class="nav-links">
             <a href="index.php">Home</a>
-            <a class="active" href="about.php">About</a>
+            <a class="active" href="about.php" aria-current="page">About</a>
             <a href="skills.php">Skills</a>
             <a href="projects.php">Projects</a>
             <a href="resume.php">Resume</a>
             <a href="contact.php">Contact</a>
-            <button class="theme-toggle" aria-label="Toggle dark mode">☾</button>
+            <button class="theme-toggle" type="button" aria-label="Toggle dark mode">☾</button>
         </div>
     </nav>
 </header>
@@ -54,7 +56,7 @@ function escapeAbout($value) {
 
     <section class="section container two-column">
         <div>
-            <img class="about-image" src="images/about.png" alt="About <?php echo escapeAbout($profile['full_name']); ?>">
+            <img class="about-image" src="<?php echo escapeAbout($aboutImage); ?>" alt="About <?php echo escapeAbout($profile['full_name']); ?>">
         </div>
 
         <div>
@@ -101,7 +103,7 @@ function escapeAbout($value) {
     </div>
 </footer>
 
-<button class="scroll-top" aria-label="Scroll to top">↑</button>
+<button class="scroll-top" type="button" aria-label="Scroll to top">↑</button>
 <script src="js/script.js"></script>
 
 </body>
