@@ -146,7 +146,7 @@ if (!$profile) {
             <label for="message">Message</label>
             <textarea id="message" name="message" rows="6" maxlength="10000" required><?php echo escape($values['message']); ?></textarea>
 
-            <button class="btn" type="submit">Send Message</button>
+            <input class="btn" type="submit" value="Send Message">
         </form>
     </section>
 </main>
